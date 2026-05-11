@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { syntaxToLanguage, getRequestContentType } from './utils'
+import { syntaxToLanguage, getRequestContentType, formatStatusLine } from './utils'
 
 describe('syntaxToLanguage', () => {
   it('maps json', () => expect(syntaxToLanguage('json')).toBe('json'))
@@ -9,6 +9,15 @@ describe('syntaxToLanguage', () => {
   it('maps css', () => expect(syntaxToLanguage('css')).toBe('css'))
   it('falls back to plaintext for unknown', () => expect(syntaxToLanguage('image')).toBe('plaintext'))
   it('falls back to plaintext for empty', () => expect(syntaxToLanguage('')).toBe('plaintext'))
+})
+
+describe('formatStatusLine', () => {
+  it('formats status line', () => {
+    expect(formatStatusLine('HTTP/1.1', 200, 'OK')).toBe('HTTP/1.1 200 OK')
+  })
+  it('handles empty reason', () => {
+    expect(formatStatusLine('HTTP/2', 204, '')).toBe('HTTP/2 204')
+  })
 })
 
 describe('getRequestContentType', () => {

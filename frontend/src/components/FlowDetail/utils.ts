@@ -17,3 +17,8 @@ export function syntaxToLanguage(syntaxHighlight: string): string {
 export function getRequestContentType(headers: [string, string][]): string {
   return headers.find(([k]) => k.toLowerCase() === 'content-type')?.[1] ?? ''
 }
+
+/** Format HTTP response status line. */
+export function formatStatusLine(httpVersion: string, statusCode: number, reason: string): string {
+  return reason ? `${httpVersion} ${statusCode} ${reason}` : `${httpVersion} ${statusCode}`
+}
