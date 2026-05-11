@@ -6,9 +6,28 @@ export type WsEvent =
   | { type: 'flows/reset' }
 
 export type WsEventHandler = (event: WsEvent) => void
+export type WsStatusHandler = (status: 'connected' | 'disconnected') => void
 
 const BASE_DELAY = 500
 const MAX_DELAY = 5000
+
+export function getWsUrl(
+  configured = import.meta.env.VITE_MITMWEB_URL ?? '',
+  protocol = location.protocol,
+  host = location.host,
+): string {
+  if (configured) {
+    const url = new URL(configured)
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    url.pathname = '/updates'
+    url.search = ''
+    url.hash = ''
+    return url.toString()
+  }
+
+  const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${wsProtocol}//${host}/updates`
+}
 
 export function calcReconnectDelay(attempt: number): number {
   return Math.min(BASE_DELAY * 2 ** attempt, MAX_DELAY)
@@ -33,17 +52,22 @@ export function parseWsMessage(raw: string): WsEvent | null {
 
 /** Opens a WebSocket to /updates and calls onEvent for each recognized event.
  *  Returns a cleanup function that stops reconnection and closes the socket. */
-export function createWsConnection(onEvent: WsEventHandler): () => void {
+export function createWsConnection(
+  onEvent: WsEventHandler,
+  onStatus?: WsStatusHandler,
+): () => void {
   let ws: WebSocket | null = null
   let attempt = 0
   let stopped = false
 
   function connect() {
     if (stopped) return
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    ws = new WebSocket(`${protocol}//${location.host}/updates`)
+    ws = new WebSocket(getWsUrl())
 
-    ws.onopen = () => { attempt = 0 }
+    ws.onopen = () => {
+      attempt = 0
+      onStatus?.('connected')
+    }
 
     ws.onmessage = (e: MessageEvent<string>) => {
       const event = parseWsMessage(e.data)
@@ -52,6 +76,7 @@ export function createWsConnection(onEvent: WsEventHandler): () => void {
 
     ws.onclose = () => {
       if (stopped) return
+      onStatus?.('disconnected')
       setTimeout(connect, calcReconnectDelay(attempt++))
     }
   }

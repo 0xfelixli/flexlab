@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { getXsrfToken } from './client'
+import { getApiBaseUrl, getXsrfToken, joinApiPath } from './client'
 
 describe('getXsrfToken', () => {
   it('returns empty string when no cookie', () => {
@@ -25,5 +25,27 @@ describe('getXsrfToken', () => {
   it('handles Tornado XSRF token format (pipe-separated)', () => {
     const token = '2|deadbeef|1234567890'
     expect(getXsrfToken(`_xsrf=${token}`)).toBe(token)
+  })
+})
+
+describe('getApiBaseUrl', () => {
+  it('uses an explicit configured base URL without a trailing slash', () => {
+    expect(getApiBaseUrl('http://127.0.0.1:8081/')).toBe('http://127.0.0.1:8081')
+  })
+
+  it('falls back to same-origin proxy when no base URL is configured', () => {
+    expect(getApiBaseUrl('')).toBe('')
+  })
+})
+
+describe('joinApiPath', () => {
+  it('joins same-origin paths unchanged when no base URL is configured', () => {
+    expect(joinApiPath('/flows', '')).toBe('/flows')
+  })
+
+  it('joins configured mitmweb base URL with API paths', () => {
+    expect(joinApiPath('/flows/abc/replay', 'http://127.0.0.1:8081/')).toBe(
+      'http://127.0.0.1:8081/flows/abc/replay',
+    )
   })
 })

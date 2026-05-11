@@ -1,14 +1,5 @@
 import { constants } from 'node:fs'
-import {
-  access,
-  cp,
-  mkdir,
-  readFile,
-  readdir,
-  rm,
-  stat,
-  writeFile,
-} from 'node:fs/promises'
+import { access, cp, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -88,34 +79,21 @@ async function readAndValidateIndex(distDir: string) {
   const assetReferences = indexHtml.matchAll(/(?:src|href)=["'](?:\.\/|\/)assets\/([^"']+)["']/g)
 
   for (const reference of assetReferences) {
-    await assertReadable(
-      join(distDir, 'assets', reference[1]),
-      'Missing React build asset',
-    )
+    await assertReadable(join(distDir, 'assets', reference[1]), 'Missing React build asset')
   }
 
   const rootReferences = indexHtml.matchAll(/(?:src|href)=["']([^"']+)["']/g)
   for (const reference of rootReferences) {
     const value = reference[1]
     if (!isRootStaticReference(value)) continue
-
-    await assertReadable(
-      join(distDir, value.replace(/^\.?\//, '')),
-      'Missing React build asset',
-    )
+    await assertReadable(join(distDir, value.replace(/^\.?\//, '')), 'Missing React build asset')
   }
 
   return rewriteAssetReferences(indexHtml)
 }
 
-async function clearGeneratedStatic(staticDir: string) {
+async function ensureStaticDir(staticDir: string) {
   await mkdir(staticDir, { recursive: true })
-  const entries = await readdir(staticDir)
-  await Promise.all(
-    entries
-      .filter((entry) => entry !== 'favicon.ico')
-      .map((entry) => rm(join(staticDir, entry), { recursive: true, force: true })),
-  )
 }
 
 export async function syncMitmwebUi({ distDir, targetDir }: SyncMitmwebUiOptions) {
@@ -123,7 +101,7 @@ export async function syncMitmwebUi({ distDir, targetDir }: SyncMitmwebUiOptions
 
   const staticDir = join(targetDir, 'static')
   await mkdir(targetDir, { recursive: true })
-  await clearGeneratedStatic(staticDir)
+  await ensureStaticDir(staticDir)
 
   await writeFile(join(targetDir, 'index.html'), indexHtml)
 

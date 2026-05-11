@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, joinApiPath } from './client'
 import type { MitmFlow } from '../types/flow'
 
 export interface ContentView {
@@ -9,7 +9,7 @@ export interface ContentView {
 }
 
 export async function fetchFlows(): Promise<MitmFlow[]> {
-  return api.get('/flows').json<MitmFlow[]>()
+  return api.get(joinApiPath('/flows')).json<MitmFlow[]>()
 }
 
 export async function fetchContent(
@@ -17,36 +17,36 @@ export async function fetchContent(
   message: 'request' | 'response',
   view = 'auto',
 ): Promise<ContentView> {
-  return api.get(`/flows/${flowId}/${message}/content/${view}`).json<ContentView>()
+  return api.get(joinApiPath(`/flows/${flowId}/${message}/content/${view}`)).json<ContentView>()
 }
 
 export async function resumeFlow(flowId: string): Promise<void> {
-  await api.post(`/flows/${flowId}/resume`)
+  await api.post(joinApiPath(`/flows/${flowId}/resume`))
 }
 
 export async function killFlow(flowId: string): Promise<void> {
-  await api.post(`/flows/${flowId}/kill`)
+  await api.post(joinApiPath(`/flows/${flowId}/kill`))
 }
 
 export async function replayFlow(flowId: string): Promise<void> {
-  await api.post(`/flows/${flowId}/replay`)
+  await api.post(joinApiPath(`/flows/${flowId}/replay`))
 }
 
 export async function duplicateFlow(flowId: string): Promise<string> {
-  return api.post(`/flows/${flowId}/duplicate`).text()
+  return api.post(joinApiPath(`/flows/${flowId}/duplicate`)).text()
 }
 
 export async function updateFlow(
   flowId: string,
   patch: Record<string, unknown>,
 ): Promise<void> {
-  await api.put(`/flows/${flowId}`, { json: patch })
+  await api.put(joinApiPath(`/flows/${flowId}`), { json: patch })
 }
 
 export async function setIntercept(expr: string): Promise<void> {
-  await api.put('/options', { json: { intercept: expr } })
+  await api.put(joinApiPath('/options'), { json: { intercept: expr } })
 }
 
 export async function clearFlows(): Promise<void> {
-  await api.post('/clear')
+  await api.post(joinApiPath('/clear'))
 }

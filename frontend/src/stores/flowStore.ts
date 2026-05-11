@@ -6,6 +6,8 @@ import { createWsConnection } from '../api/ws'
 import type { FlowDetail } from '../types/flow'
 import type { WsEvent } from '../api/ws'
 
+export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected'
+
 /** Pure function — apply a WebSocket event to the flows map. */
 export function applyWsEvent(
   flows: Map<string, FlowDetail>,
@@ -26,7 +28,9 @@ export function applyWsEvent(
 interface FlowState {
   flows: Map<string, FlowDetail>
   selectedId: string | null
+  connectionStatus: ConnectionStatus
   selectFlow: (id: string | null) => void
+  setConnectionStatus: (status: ConnectionStatus) => void
   setFlows: (flows: FlowDetail[]) => void
   handleWsEvent: (event: WsEvent) => void
   /** Connect WebSocket + fetch initial flows. Returns cleanup fn. */
@@ -37,8 +41,10 @@ export const useFlowStore = create<FlowState>()(
   subscribeWithSelector((set, get) => ({
     flows: new Map(),
     selectedId: null,
+    connectionStatus: 'idle',
 
     selectFlow: (id) => set({ selectedId: id }),
+    setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
 
     setFlows: (list) =>
       set({ flows: new Map(list.map((f) => [f.id, f])) }),
@@ -53,11 +59,18 @@ export const useFlowStore = create<FlowState>()(
     },
 
     init: () => {
-      fetchFlows()
-        .then((mitmFlows) => get().setFlows(mitmFlows.map(toFlowDetail)))
-        .catch(() => {/* mitmproxy not running yet — ignore */})
+      set({ connectionStatus: 'connecting' })
 
-      return createWsConnection(get().handleWsEvent)
+      fetchFlows()
+        .then((mitmFlows) => {
+          get().setFlows(mitmFlows.map(toFlowDetail))
+          get().setConnectionStatus('connected')
+        })
+        .catch(() => {
+          get().setConnectionStatus('disconnected')
+        })
+
+      return createWsConnection(get().handleWsEvent, get().setConnectionStatus)
     },
   })),
 )

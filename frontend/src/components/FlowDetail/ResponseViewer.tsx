@@ -10,27 +10,52 @@ interface ResponseViewerProps {
 }
 
 interface BodyState {
+  flowId: string | null
   text: string
   language: string
-  loading: boolean
 }
 
 export function ResponseViewer({ flow }: ResponseViewerProps) {
-  const [body, setBody] = useState<BodyState>({ text: '', language: 'plaintext', loading: false })
+  const [body, setBody] = useState<BodyState>({
+    flowId: null,
+    text: '',
+    language: 'plaintext',
+  })
 
   useEffect(() => {
     if (flow.statusCode === null) return
 
-    setBody((b) => ({ ...b, loading: true }))
+    let cancelled = false
     fetchContent(flow.id, 'response')
-      .then((cv) => setBody({ text: cv.text, language: syntaxToLanguage(cv.syntax_highlight), loading: false }))
-      .catch(() => setBody({ text: '', language: 'plaintext', loading: false }))
+      .then((cv) => {
+        if (!cancelled) {
+          setBody({
+            flowId: flow.id,
+            text: cv.text,
+            language: syntaxToLanguage(cv.syntax_highlight),
+          })
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setBody({ flowId: flow.id, text: '', language: 'plaintext' })
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [flow.id, flow.statusCode])
 
   if (flow.statusCode === null) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-600 text-xs">
-        No response yet
+      <div className="flex h-full items-center justify-center bg-[#0a0e15] px-6 text-center">
+        <div>
+          <div className="text-sm font-medium text-slate-300">No response yet</div>
+          <div className="mt-1 text-xs text-slate-500">
+            The response viewer will update when this flow receives a response.
+          </div>
+        </div>
       </div>
     )
   }
@@ -40,28 +65,29 @@ export function ResponseViewer({ flow }: ResponseViewerProps) {
     flow.statusCode,
     flow.responseReason ?? '',
   )
+  const loading = body.flowId !== flow.id
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Status line */}
-      <div className="flex-shrink-0 px-3 py-1.5 bg-gray-900 border-b border-gray-800 font-mono text-xs truncate">
-        <span className={statusColor(flow.statusCode)}>{statusLine}</span>
+    <div className="flex h-full flex-col overflow-hidden bg-[#0a0e15]">
+      <div className="flex h-9 flex-shrink-0 items-center gap-2 border-b border-slate-800/80 bg-[#0f1622] px-3">
+        <span className={`rounded border border-slate-700/70 bg-slate-950/60 px-1.5 py-0.5 font-mono text-[11px] font-semibold ${statusColor(flow.statusCode)}`}>
+          {flow.statusCode}
+        </span>
+        <span className="truncate font-mono text-[12px] text-slate-300">{statusLine}</span>
       </div>
 
-      {/* Headers */}
-      <div className="flex-shrink-0 max-h-36 overflow-y-auto border-b border-gray-800 bg-gray-950">
+      <div className="max-h-40 flex-shrink-0 overflow-y-auto border-b border-slate-800/80 bg-[#0b1018] py-1">
         {(flow.responseHeaders ?? []).map(([name, value], i) => (
-          <div key={i} className="flex px-3 py-0.5 text-xs hover:bg-gray-900/50">
-            <span className="text-gray-500 flex-shrink-0 w-44 truncate">{name}</span>
-            <span className="text-gray-300 truncate">{value}</span>
+          <div key={i} className="flex px-3 py-1 text-xs hover:bg-slate-800/35">
+            <span className="w-44 flex-shrink-0 truncate font-mono text-[11px] text-slate-500">{name}</span>
+            <span className="truncate text-slate-300">{value}</span>
           </div>
         ))}
       </div>
 
-      {/* Body */}
-      <div className="flex-1 min-h-0 relative">
-        {body.loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-950 z-10 text-gray-600 text-xs">
+      <div className="relative min-h-0 flex-1">
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0a0e15]/90 text-xs text-slate-500">
             Loading…
           </div>
         )}

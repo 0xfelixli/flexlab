@@ -52,7 +52,12 @@ export function RepeaterTab({ flowId }: RepeaterTabProps) {
         loading: false,
       })
     } catch {
-      setResponse({ text: 'Error sending request', language: 'plaintext', statusCode: null, loading: false })
+      setResponse({
+        text: 'Error sending request',
+        language: 'plaintext',
+        statusCode: null,
+        loading: false,
+      })
     } finally {
       setSending(false)
     }
@@ -60,35 +65,36 @@ export function RepeaterTab({ flowId }: RepeaterTabProps) {
 
   if (!flow) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-600 text-xs">
-        Loading…
+      <div className="flex h-full items-center justify-center bg-[#0a0e15] text-xs text-slate-500">
+        Loading repeater flow…
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Request editor */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 border-b border-gray-800 flex-shrink-0">
-        <span className="text-xs text-gray-400 font-mono truncate flex-1">
+    <div className="flex h-full flex-col overflow-hidden bg-[#0a0e15]">
+      <div className="flex h-10 flex-shrink-0 items-center gap-2 border-b border-slate-800/80 bg-[#0f1622] px-3">
+        <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-slate-300">
           {flow.method} {flow.scheme}://{flow.host}{flow.path}
         </span>
         <button
           onClick={handleSend}
           disabled={sending}
-          className="px-3 py-0.5 rounded text-xs font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex-shrink-0"
+          className="h-7 flex-shrink-0 rounded-md bg-cyan-500 px-3 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {sending ? 'Sending…' : 'Send'}
         </button>
       </div>
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Request body editor */}
-        <div className="flex flex-col w-1/2 border-r border-gray-800 overflow-hidden">
-          <div className="px-2 py-1 bg-gray-900 border-b border-gray-800 text-xs text-gray-500 flex-shrink-0">
-            Request Body
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex w-1/2 flex-col overflow-hidden border-r border-slate-800/80">
+          <div className="flex h-8 flex-shrink-0 items-center justify-between border-b border-slate-800/80 bg-[#0b1018] px-3 text-xs">
+            <span className="font-medium text-slate-300">Request Body</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-slate-600">
+              editable
+            </span>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="min-h-0 flex-1">
             <MonacoEditor
               value={requestBody}
               language="plaintext"
@@ -98,25 +104,29 @@ export function RepeaterTab({ flowId }: RepeaterTabProps) {
           </div>
         </div>
 
-        {/* Response */}
-        <div className="flex flex-col w-1/2 overflow-hidden">
-          <div className="px-2 py-1 bg-gray-900 border-b border-gray-800 text-xs flex-shrink-0 flex items-center gap-2">
-            <span className="text-gray-500">Response</span>
+        <div className="flex w-1/2 flex-col overflow-hidden">
+          <div className="flex h-8 flex-shrink-0 items-center gap-2 border-b border-slate-800/80 bg-[#0b1018] px-3 text-xs">
+            <span className="font-medium text-slate-300">Response</span>
             {response.statusCode !== null && (
-              <span className={`font-mono ${response.statusCode >= 400 ? 'text-red-400' : 'text-green-400'}`}>
+              <span className={`rounded border border-slate-700/70 bg-slate-950/60 px-1.5 py-0.5 font-mono text-[11px] ${response.statusCode >= 400 ? 'text-red-300' : 'text-emerald-300'}`}>
                 {response.statusCode}
               </span>
             )}
           </div>
-          <div className="flex-1 min-h-0 relative">
+          <div className="relative min-h-0 flex-1">
             {response.loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-950 z-10 text-gray-600 text-xs">
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0a0e15]/90 text-xs text-slate-500">
                 Waiting for response…
               </div>
             )}
             {!response.loading && !response.text && (
-              <div className="flex items-center justify-center h-full text-gray-600 text-xs">
-                Hit Send to see response
+              <div className="flex h-full items-center justify-center px-6 text-center">
+                <div>
+                  <div className="text-sm font-medium text-slate-300">Ready to replay</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Edit the request body, then send it to inspect the response.
+                  </div>
+                </div>
               </div>
             )}
             {response.text && (

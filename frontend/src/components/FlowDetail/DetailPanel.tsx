@@ -14,8 +14,16 @@ export function DetailPanel() {
 
   if (!flow) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-600 text-xs">
-        Select a flow to inspect
+      <div className="flex h-full items-center justify-center bg-[#0a0e15] px-6 text-center">
+        <div>
+          <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-lg border border-slate-700/70 bg-slate-900 text-[12px] font-semibold text-slate-400">
+            INS
+          </div>
+          <div className="text-sm font-medium text-slate-300">Select a flow</div>
+          <div className="mt-1 text-xs text-slate-500">
+            Request and response details will appear here.
+          </div>
+        </div>
       </div>
     )
   }
@@ -24,41 +32,39 @@ export function DetailPanel() {
   const handleKill = () => killFlow(flow.id).catch(() => {})
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Tab bar */}
-      <div className="flex-shrink-0 flex items-center bg-gray-900 border-b border-gray-800 text-xs">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex h-10 flex-shrink-0 items-center border-b border-slate-800/80 bg-[#0b1018] text-xs">
         {(['request', 'response'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={[
-              'px-4 py-2 capitalize transition-colors border-b-2 flex-shrink-0',
+              'h-full flex-shrink-0 border-b-2 px-4 capitalize transition-colors',
               tab === t
-                ? 'text-blue-400 border-blue-500 bg-gray-950'
-                : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-gray-800',
+                ? 'border-cyan-300 bg-cyan-400/[0.05] text-cyan-100'
+                : 'border-transparent text-slate-500 hover:bg-slate-800/50 hover:text-slate-300',
             ].join(' ')}
           >
             {t}
             {t === 'response' && flow.statusCode !== null && (
-              <span className={`ml-1.5 font-mono ${flow.statusCode >= 400 ? 'text-red-400' : flow.statusCode >= 300 ? 'text-blue-400' : 'text-green-400'}`}>
+              <span className={`ml-1.5 font-mono ${flow.statusCode >= 400 ? 'text-red-300' : flow.statusCode >= 300 ? 'text-sky-300' : 'text-emerald-300'}`}>
                 {flow.statusCode}
               </span>
             )}
           </button>
         ))}
 
-        {/* Resume / Kill — only shown for intercepted flows */}
         {flow.intercepted && (
-          <div className="flex items-center gap-1 ml-auto pr-2">
+          <div className="ml-auto flex items-center gap-1 pr-2">
             <button
               onClick={handleResume}
-              className="px-2 py-0.5 rounded text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/40 hover:bg-green-600/30 transition-colors"
+              className="h-7 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-2.5 text-xs font-medium text-emerald-200 transition-colors hover:bg-emerald-300/15"
             >
               Resume
             </button>
             <button
               onClick={handleKill}
-              className="px-2 py-0.5 rounded text-xs font-medium bg-red-600/20 text-red-400 border border-red-600/40 hover:bg-red-600/30 transition-colors"
+              className="h-7 rounded-md border border-red-300/30 bg-red-300/10 px-2.5 text-xs font-medium text-red-200 transition-colors hover:bg-red-300/15"
             >
               Kill
             </button>
@@ -66,8 +72,7 @@ export function DetailPanel() {
         )}
       </div>
 
-      {/* Tab content */}
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         {tab === 'request' ? (
           <RequestViewer flow={flow} />
         ) : (

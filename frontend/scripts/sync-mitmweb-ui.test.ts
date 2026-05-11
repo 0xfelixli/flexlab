@@ -43,7 +43,7 @@ describe('syncMitmwebUi', () => {
     )
   })
 
-  it('removes stale generated assets but preserves existing static/favicon.ico', async () => {
+  it('preserves existing static files while copying generated assets', async () => {
     const dist = await createDist()
     const target = join(root, 'web')
     await mkdir(join(target, 'static'), { recursive: true })
@@ -57,7 +57,9 @@ describe('syncMitmwebUi', () => {
       'favicon.svg',
       'index.css',
       'index.js',
+      'old.js',
     ])
+    await expect(readFile(join(target, 'static', 'old.js'), 'utf8')).resolves.toBe('old')
     await expect(readFile(join(target, 'static', 'favicon.ico'), 'utf8')).resolves.toBe('ico')
   })
 
@@ -112,7 +114,7 @@ describe('syncMitmwebUi', () => {
     expect(html).toContain('src="https://cdn.example.test/tool.js"')
   })
 
-  it('rejects missing referenced assets before clearing target/static', async () => {
+  it('rejects missing referenced assets before changing target/static', async () => {
     const dist = join(root, 'dist')
     await mkdir(join(dist, 'assets'), { recursive: true })
     await writeFile(
@@ -133,7 +135,7 @@ describe('syncMitmwebUi', () => {
     await expect(readFile(join(target, 'static', 'favicon.ico'), 'utf8')).resolves.toBe('ico')
   })
 
-  it('rejects missing referenced root files before clearing target/static', async () => {
+  it('rejects missing referenced root files before changing target/static', async () => {
     const dist = join(root, 'dist')
     await mkdir(dist, { recursive: true })
     await writeFile(join(dist, 'index.html'), '<link rel="icon" href="/missing.svg">')

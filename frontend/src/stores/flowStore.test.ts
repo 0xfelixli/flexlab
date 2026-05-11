@@ -99,13 +99,14 @@ describe('applyWsEvent', () => {
 
 describe('useFlowStore', () => {
   beforeEach(() => {
-    useFlowStore.setState({ flows: new Map(), selectedId: null })
+    useFlowStore.setState({ flows: new Map(), selectedId: null, connectionStatus: 'idle' })
   })
 
   it('starts with empty flows and no selection', () => {
-    const { flows, selectedId } = useFlowStore.getState()
+    const { flows, selectedId, connectionStatus } = useFlowStore.getState()
     expect(flows.size).toBe(0)
     expect(selectedId).toBeNull()
+    expect(connectionStatus).toBe('idle')
   })
 
   it('selectFlow sets selectedId', () => {
@@ -142,5 +143,10 @@ describe('useFlowStore', () => {
     useFlowStore.setState({ flows: new Map([['flow-1', mockFlow]]) })
     useFlowStore.getState().handleWsEvent({ type: 'flows/reset' })
     expect(useFlowStore.getState().flows.size).toBe(0)
+  })
+
+  it('setConnectionStatus updates mitmweb connection state', () => {
+    useFlowStore.getState().setConnectionStatus('connected')
+    expect(useFlowStore.getState().connectionStatus).toBe('connected')
   })
 })

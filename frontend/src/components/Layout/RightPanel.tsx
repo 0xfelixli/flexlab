@@ -22,58 +22,56 @@ export function RightPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Top tab bar */}
-      <div className="flex-shrink-0 flex items-center bg-gray-900 border-b border-gray-800 text-xs overflow-x-auto">
-        {/* Inspector tab */}
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex h-10 flex-shrink-0 items-center overflow-x-auto border-b border-slate-800/80 bg-[#0f1622] text-xs">
         <button
-          onClick={() => setActiveRepeater(null as unknown as string)}
+          onClick={() => setActiveRepeater(null)}
           className={[
-            'px-3 py-2 flex-shrink-0 transition-colors border-b-2',
+            'h-full flex-shrink-0 border-b-2 px-4 font-medium transition-colors',
             showInspector
-              ? 'text-gray-200 border-blue-500'
-              : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-gray-800',
+              ? 'border-cyan-300 bg-cyan-400/[0.06] text-slate-100'
+              : 'border-transparent text-slate-500 hover:bg-slate-800/50 hover:text-slate-300',
           ].join(' ')}
         >
           Inspector
         </button>
 
-        {/* Repeater tabs */}
         {repeaterTabs.map((tab) => (
           <div
             key={tab.flowId}
             className={[
-              'flex items-center gap-1 px-3 py-2 flex-shrink-0 cursor-pointer border-b-2 transition-colors',
+              'flex h-full flex-shrink-0 cursor-pointer items-center gap-1.5 border-b-2 px-3 transition-colors',
               activeRepeaterId === tab.flowId
-                ? 'text-gray-200 border-orange-400'
-                : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-gray-800',
+                ? 'border-orange-300 bg-orange-400/[0.06] text-slate-100'
+                : 'border-transparent text-slate-500 hover:bg-slate-800/50 hover:text-slate-300',
             ].join(' ')}
             onClick={() => setActiveRepeater(tab.flowId)}
           >
-            <span className="font-mono text-orange-400/70 mr-0.5">R</span>
+            <span className="mr-0.5 rounded border border-orange-300/20 bg-orange-300/10 px-1 font-mono text-[10px] text-orange-200">
+              R
+            </span>
             <span className="max-w-32 truncate">{tab.label}</span>
             <button
               onClick={(e) => { e.stopPropagation(); closeRepeaterTab(tab.flowId) }}
-              className="text-gray-600 hover:text-gray-400 ml-1 leading-none"
+              className="ml-1 rounded px-1 text-slate-600 hover:bg-slate-700/60 hover:text-slate-300"
+              aria-label={`Close ${tab.label}`}
             >
               ×
             </button>
           </div>
         ))}
 
-        {/* Send to Repeater button */}
         {selectedId && showInspector && (
           <button
             onClick={handleSendToRepeater}
-            className="ml-auto mr-2 px-2 py-0.5 flex-shrink-0 rounded text-xs text-orange-400 border border-orange-400/30 hover:bg-orange-400/10 transition-colors"
+            className="ml-auto mr-2 h-7 flex-shrink-0 rounded-md border border-orange-300/30 bg-orange-300/10 px-2.5 text-xs font-medium text-orange-200 transition-colors hover:bg-orange-300/15"
           >
             Send to Repeater
           </button>
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1 bg-[#0a0e15]">
         {showInspector ? (
           <DetailPanel />
         ) : (

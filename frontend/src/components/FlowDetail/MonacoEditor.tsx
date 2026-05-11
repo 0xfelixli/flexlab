@@ -14,6 +14,24 @@ export function MonacoEditor({ value, language, readOnly = true, onChange }: Mon
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const monaco = useMonaco()
 
+  useEffect(() => {
+    if (!monaco) return
+    monaco.editor.defineTheme('flexlab-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': '#0a0e15',
+        'editor.foreground': '#cbd5e1',
+        'editorLineNumber.foreground': '#334155',
+        'editorLineNumber.activeForeground': '#64748b',
+        'editorCursor.foreground': '#67e8f9',
+        'editor.selectionBackground': '#164e63',
+        'editor.lineHighlightBackground': '#111827',
+      },
+    })
+  }, [monaco])
+
   const handleMount: OnMount = (ed) => {
     editorRef.current = ed
     ed.setValue(value)
@@ -38,7 +56,7 @@ export function MonacoEditor({ value, language, readOnly = true, onChange }: Mon
 
   return (
     <Editor
-      theme="vs-dark"
+      theme="flexlab-dark"
       defaultLanguage="plaintext"
       onMount={handleMount}
       onChange={onChange ? (v) => onChange(v ?? '') : undefined}
@@ -48,10 +66,13 @@ export function MonacoEditor({ value, language, readOnly = true, onChange }: Mon
         scrollBeyondLastLine: false,
         wordWrap: 'on',
         fontSize: 12,
-        lineNumbers: 'off',
+        fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace',
+        lineNumbers: 'on',
+        lineNumbersMinChars: 3,
         folding: false,
-        renderLineHighlight: 'none',
-        padding: { top: 8 },
+        renderLineHighlight: 'line',
+        overviewRulerBorder: false,
+        padding: { top: 10, bottom: 10 },
       }}
     />
   )
