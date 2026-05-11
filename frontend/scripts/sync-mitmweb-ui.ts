@@ -1,4 +1,5 @@
-import { access, cp, mkdir, readdir, rm, stat } from 'node:fs/promises'
+import { constants } from 'node:fs'
+import { access, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -26,6 +27,51 @@ async function assertDistReady(distDir: string) {
   }
 }
 
+async function assertReadable(path: string, message: string) {
+  try {
+    await access(path, constants.R_OK)
+  } catch {
+    throw new Error(`${message}: ${path}`)
+  }
+}
+
+async function validateDistEntries(distDir: string) {
+  const entries = await readdir(distDir)
+  await Promise.all(entries.map((entry) => stat(join(distDir, entry))))
+
+  const assetsDir = join(distDir, 'assets')
+  if (await pathExists(assetsDir)) {
+    const assets = await readdir(assetsDir)
+    await Promise.all(assets.map((asset) => stat(join(assetsDir, asset))))
+  }
+}
+
+function rewriteAssetReferences(indexHtml: string) {
+  return indexHtml.replace(
+    /((?:src|href)=["'])(?:\.\/|\/)assets\/([^"']+)(["'])/g,
+    '$1./static/$2$3',
+  )
+}
+
+async function readAndValidateIndex(distDir: string) {
+  await assertDistReady(distDir)
+  await validateDistEntries(distDir)
+
+  const indexHtml = await readFile(join(distDir, 'index.html'), 'utf8')
+  const assetReferences = indexHtml.matchAll(
+    /(?:src|href)=["'](?:\.\/|\/)assets\/([^"']+)["']/g,
+  )
+
+  for (const reference of assetReferences) {
+    await assertReadable(
+      join(distDir, 'assets', reference[1]),
+      'Missing React build asset',
+    )
+  }
+
+  return rewriteAssetReferences(indexHtml)
+}
+
 async function clearGeneratedStatic(staticDir: string) {
   await mkdir(staticDir, { recursive: true })
   const entries = await readdir(staticDir)
@@ -37,13 +83,13 @@ async function clearGeneratedStatic(staticDir: string) {
 }
 
 export async function syncMitmwebUi({ distDir, targetDir }: SyncMitmwebUiOptions) {
-  await assertDistReady(distDir)
+  const indexHtml = await readAndValidateIndex(distDir)
 
   const staticDir = join(targetDir, 'static')
   await mkdir(targetDir, { recursive: true })
   await clearGeneratedStatic(staticDir)
 
-  await cp(join(distDir, 'index.html'), join(targetDir, 'index.html'))
+  await writeFile(join(targetDir, 'index.html'), indexHtml)
 
   const entries = await readdir(distDir)
   for (const entry of entries) {

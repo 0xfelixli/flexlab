@@ -61,6 +61,49 @@ describe('syncMitmwebUi', () => {
     await expect(readFile(join(target, 'static', 'favicon.ico'), 'utf8')).resolves.toBe('ico')
   })
 
+  it('rewrites Vite asset references in index.html to mitmweb static URLs', async () => {
+    const dist = join(root, 'dist')
+    await mkdir(join(dist, 'assets'), { recursive: true })
+    await writeFile(
+      join(dist, 'index.html'),
+      [
+        '<div id="flexlab"></div>',
+        '<script type="module" src="./assets/index-abc.js"></script>',
+        '<link rel="stylesheet" href="/assets/index-def.css">',
+      ].join(''),
+    )
+    await writeFile(join(dist, 'assets', 'index-abc.js'), 'console.log("flexlab")')
+    await writeFile(join(dist, 'assets', 'index-def.css'), 'body{}')
+    const target = join(root, 'web')
+
+    await syncMitmwebUi({ distDir: dist, targetDir: target })
+
+    const html = await readFile(join(target, 'index.html'), 'utf8')
+    expect(html).toContain('src="./static/index-abc.js"')
+    expect(html).toContain('href="./static/index-def.css"')
+  })
+
+  it('rejects missing referenced assets before clearing target/static', async () => {
+    const dist = join(root, 'dist')
+    await mkdir(join(dist, 'assets'), { recursive: true })
+    await writeFile(
+      join(dist, 'index.html'),
+      '<script type="module" src="./assets/missing.js"></script>',
+    )
+    const target = join(root, 'web')
+    await mkdir(join(target, 'static'), { recursive: true })
+    await writeFile(join(target, 'static', 'old.js'), 'old')
+    await writeFile(join(target, 'static', 'favicon.ico'), 'ico')
+
+    await expect(syncMitmwebUi({ distDir: dist, targetDir: target })).rejects.toThrow(
+      'Missing React build asset',
+    )
+
+    expect((await readdir(join(target, 'static'))).sort()).toEqual(['favicon.ico', 'old.js'])
+    await expect(readFile(join(target, 'static', 'old.js'), 'utf8')).resolves.toBe('old')
+    await expect(readFile(join(target, 'static', 'favicon.ico'), 'utf8')).resolves.toBe('ico')
+  })
+
   it('rejects when dist/index.html is missing with a helpful message', async () => {
     const dist = join(root, 'missing-dist')
     const target = join(root, 'web')
