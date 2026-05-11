@@ -83,6 +83,35 @@ describe('syncMitmwebUi', () => {
     expect(html).toContain('href="./static/index-def.css"')
   })
 
+  it('rewrites root dist file references without changing external, anchor, data, or API paths', async () => {
+    const dist = join(root, 'dist')
+    await mkdir(join(dist, 'assets'), { recursive: true })
+    await writeFile(
+      join(dist, 'index.html'),
+      [
+        '<link rel="icon" href="/favicon.svg">',
+        '<link rel="manifest" href="./manifest.webmanifest">',
+        '<a href="/flows">flows</a>',
+        '<a href="#traffic">traffic</a>',
+        '<img src="data:image/svg+xml;base64,abc">',
+        '<script src="https://cdn.example.test/tool.js"></script>',
+      ].join(''),
+    )
+    await writeFile(join(dist, 'favicon.svg'), '<svg></svg>')
+    await writeFile(join(dist, 'manifest.webmanifest'), '{}')
+    const target = join(root, 'web')
+
+    await syncMitmwebUi({ distDir: dist, targetDir: target })
+
+    const html = await readFile(join(target, 'index.html'), 'utf8')
+    expect(html).toContain('href="./static/favicon.svg"')
+    expect(html).toContain('href="./static/manifest.webmanifest"')
+    expect(html).toContain('href="/flows"')
+    expect(html).toContain('href="#traffic"')
+    expect(html).toContain('src="data:image/svg+xml;base64,abc"')
+    expect(html).toContain('src="https://cdn.example.test/tool.js"')
+  })
+
   it('rejects missing referenced assets before clearing target/static', async () => {
     const dist = join(root, 'dist')
     await mkdir(join(dist, 'assets'), { recursive: true })
@@ -90,6 +119,24 @@ describe('syncMitmwebUi', () => {
       join(dist, 'index.html'),
       '<script type="module" src="./assets/missing.js"></script>',
     )
+    const target = join(root, 'web')
+    await mkdir(join(target, 'static'), { recursive: true })
+    await writeFile(join(target, 'static', 'old.js'), 'old')
+    await writeFile(join(target, 'static', 'favicon.ico'), 'ico')
+
+    await expect(syncMitmwebUi({ distDir: dist, targetDir: target })).rejects.toThrow(
+      'Missing React build asset',
+    )
+
+    expect((await readdir(join(target, 'static'))).sort()).toEqual(['favicon.ico', 'old.js'])
+    await expect(readFile(join(target, 'static', 'old.js'), 'utf8')).resolves.toBe('old')
+    await expect(readFile(join(target, 'static', 'favicon.ico'), 'utf8')).resolves.toBe('ico')
+  })
+
+  it('rejects missing referenced root files before clearing target/static', async () => {
+    const dist = join(root, 'dist')
+    await mkdir(dist, { recursive: true })
+    await writeFile(join(dist, 'index.html'), '<link rel="icon" href="/missing.svg">')
     const target = join(root, 'web')
     await mkdir(join(target, 'static'), { recursive: true })
     await writeFile(join(target, 'static', 'old.js'), 'old')

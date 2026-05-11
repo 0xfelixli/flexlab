@@ -1,5 +1,14 @@
 import { constants } from 'node:fs'
-import { access, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import {
+  access,
+  cp,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -46,10 +55,28 @@ async function validateDistEntries(distDir: string) {
   }
 }
 
+function isRootStaticReference(value: string): boolean {
+  if (!value.startsWith('/') && !value.startsWith('./')) return false
+  if (value.startsWith('/assets/') || value.startsWith('./assets/')) return false
+
+  const withoutPrefix = value.replace(/^\.?\//, '')
+  return !withoutPrefix.includes('/') && withoutPrefix.includes('.')
+}
+
 function rewriteAssetReferences(indexHtml: string) {
   return indexHtml.replace(
-    /((?:src|href)=["'])(?:\.\/|\/)assets\/([^"']+)(["'])/g,
-    '$1./static/$2$3',
+    /((?:src|href)=["'])([^"']+)(["'])/g,
+    (match: string, prefix: string, value: string, suffix: string) => {
+      if (value.startsWith('/assets/') || value.startsWith('./assets/')) {
+        return `${prefix}./static/${value.replace(/^\.?\/assets\//, '')}${suffix}`
+      }
+
+      if (isRootStaticReference(value)) {
+        return `${prefix}./static/${value.replace(/^\.?\//, '')}${suffix}`
+      }
+
+      return match
+    },
   )
 }
 
@@ -58,13 +85,22 @@ async function readAndValidateIndex(distDir: string) {
   await validateDistEntries(distDir)
 
   const indexHtml = await readFile(join(distDir, 'index.html'), 'utf8')
-  const assetReferences = indexHtml.matchAll(
-    /(?:src|href)=["'](?:\.\/|\/)assets\/([^"']+)["']/g,
-  )
+  const assetReferences = indexHtml.matchAll(/(?:src|href)=["'](?:\.\/|\/)assets\/([^"']+)["']/g)
 
   for (const reference of assetReferences) {
     await assertReadable(
       join(distDir, 'assets', reference[1]),
+      'Missing React build asset',
+    )
+  }
+
+  const rootReferences = indexHtml.matchAll(/(?:src|href)=["']([^"']+)["']/g)
+  for (const reference of rootReferences) {
+    const value = reference[1]
+    if (!isRootStaticReference(value)) continue
+
+    await assertReadable(
+      join(distDir, value.replace(/^\.?\//, '')),
       'Missing React build asset',
     )
   }
