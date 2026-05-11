@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { AppShell } from './components/Layout/AppShell'
 import { FlowList } from './components/FlowList/FlowList'
+import { DetailPanel } from './components/FlowDetail/DetailPanel'
 import { useFlowStore } from './stores/flowStore'
 import { clearFlows } from './api/flows'
 
@@ -20,11 +21,7 @@ export default function App() {
     <AppShell
       onClear={handleClear}
       listPanel={<FlowList />}
-      detailPanel={
-        <div className="flex items-center justify-center h-full text-gray-600 text-xs">
-          Detail Panel — coming soon
-        </div>
-      }
+      detailPanel={<DetailPanel />}
     />
   )
 }

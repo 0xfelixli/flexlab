@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { applyWsEvent } from './flowStore'
 import { useFlowStore } from './flowStore'
-import type { FlowSummary } from '../types/flow'
+import type { FlowDetail } from '../types/flow'
 import type { WsEvent } from '../api/ws'
 
-const mockFlow: FlowSummary = {
+const mockFlow: FlowDetail = {
   id: 'flow-1',
   type: 'http',
   intercepted: false,
@@ -19,6 +19,12 @@ const mockFlow: FlowSummary = {
   statusCode: 200,
   responseSize: 128,
   duration: 50,
+  httpVersion: 'HTTP/1.1',
+  requestHeaders: [['Accept', 'application/json']],
+  responseHeaders: [['Content-Type', 'application/json']],
+  responseReason: 'OK',
+  comment: '',
+  error: null,
 }
 
 const mockMitmFlow = {
@@ -114,7 +120,7 @@ describe('useFlowStore', () => {
   })
 
   it('setFlows populates the map from a list', () => {
-    useFlowStore.getState().setFlows([mockFlow, { ...mockFlow, id: 'flow-2' }])
+    useFlowStore.getState().setFlows([mockFlow, { ...mockFlow, id: 'flow-2' }] as FlowDetail[])
     expect(useFlowStore.getState().flows.size).toBe(2)
     expect(useFlowStore.getState().flows.has('flow-1')).toBe(true)
   })
