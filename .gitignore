@@ -1,0 +1,18 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# bun/node
+node_modules/
+dist/
+
+# idea/vscode
+.idea/
+.vscode/
+
+# mac
+.DS_Store
+
+# db
+*.db
