@@ -12,6 +12,7 @@ export function toFlowSummary(f: MitmFlow): FlowSummary {
     intercepted: f.intercepted,
     marked: f.marked,
     isReplay: f.is_replay != null,
+    timestamp: f.timestamp_created,
     method: f.request?.method ?? '',
     scheme: f.request?.scheme ?? '',
     host: f.request?.pretty_host ?? f.request?.host ?? '',

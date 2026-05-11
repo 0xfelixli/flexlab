@@ -97,6 +97,7 @@ export interface FlowSummary {
   intercepted: boolean
   marked: string
   isReplay: boolean
+  timestamp: number
   // HTTP fields
   method: string
   scheme: string

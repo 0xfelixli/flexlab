@@ -51,6 +51,7 @@ describe('toFlowSummary', () => {
     const s = toFlowSummary(httpFlow)
     expect(s.id).toBe('abc-123')
     expect(s.type).toBe('http')
+    expect(s.timestamp).toBe(1000)
     expect(s.method).toBe('GET')
     expect(s.scheme).toBe('https')
     expect(s.host).toBe('example.com')

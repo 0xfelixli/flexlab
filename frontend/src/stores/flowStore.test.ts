@@ -10,6 +10,7 @@ const mockFlow: FlowSummary = {
   intercepted: false,
   marked: '',
   isReplay: false,
+  timestamp: 1000,
   method: 'GET',
   scheme: 'https',
   host: 'example.com',
